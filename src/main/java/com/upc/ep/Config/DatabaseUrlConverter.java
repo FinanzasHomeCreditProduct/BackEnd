@@ -24,8 +24,11 @@ public class DatabaseUrlConverter implements ApplicationListener<ApplicationEnvi
         
         // Leer DATABASE_URL directamente de las variables de entorno del sistema
         String databaseUrl = System.getenv("DATABASE_URL");
+        String databaseUsername = System.getenv("DATABASE_USERNAME");
+        String databasePassword = System.getenv("DATABASE_PASSWORD");
         
         System.out.println("DatabaseUrlConverter: Checking DATABASE_URL...");
+        System.out.println("DatabaseUrlConverter: DATABASE_URL starts with: " + (databaseUrl != null && databaseUrl.length() > 0 ? databaseUrl.substring(0, Math.min(20, databaseUrl.length())) : "null"));
         
         // Si DATABASE_URL está en formato postgres://, convertir a JDBC
         if (databaseUrl != null && !databaseUrl.isEmpty() && databaseUrl.startsWith("postgres://")) {
@@ -82,7 +85,26 @@ public class DatabaseUrlConverter implements ApplicationListener<ApplicationEnvi
                 // No lanzar excepción, dejar que Spring Boot use la configuración por defecto
             }
         } else if (databaseUrl != null && !databaseUrl.isEmpty()) {
-            System.out.println("DatabaseUrlConverter: DATABASE_URL is already in JDBC format or different format");
+            // Si DATABASE_URL ya está en formato JDBC, usarla directamente
+            if (databaseUrl.startsWith("jdbc:postgresql://")) {
+                System.out.println("DatabaseUrlConverter: DATABASE_URL is already in JDBC format, using it directly");
+                Map<String, Object> properties = new HashMap<>();
+                properties.put("spring.datasource.url", databaseUrl);
+                
+                if (databaseUsername != null && !databaseUsername.isEmpty()) {
+                    properties.put("spring.datasource.username", databaseUsername);
+                }
+                if (databasePassword != null && !databasePassword.isEmpty()) {
+                    properties.put("spring.datasource.password", databasePassword);
+                }
+                
+                environment.getPropertySources().addFirst(
+                    new MapPropertySource("databaseUrlConverter", properties)
+                );
+                System.out.println("DatabaseUrlConverter: Set spring.datasource.url from DATABASE_URL");
+            } else {
+                System.out.println("DatabaseUrlConverter: DATABASE_URL is in unknown format: " + databaseUrl.substring(0, Math.min(50, databaseUrl.length())));
+            }
         } else {
             System.out.println("DatabaseUrlConverter: DATABASE_URL not set, using default configuration");
         }
