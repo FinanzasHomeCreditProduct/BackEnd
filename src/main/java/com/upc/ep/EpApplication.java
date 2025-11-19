@@ -1,5 +1,6 @@
 package com.upc.ep;
 
+import com.upc.ep.Config.DatabaseUrlConverter;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -7,7 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class EpApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(EpApplication.class, args);
+        SpringApplication app = new SpringApplication(EpApplication.class);
+        app.addListeners(new DatabaseUrlConverter());
+        app.run(args);
     }
 
 }
