@@ -1,9 +1,8 @@
 services:
   - type: web
     name: homecredit-backend
-    env: java
-    buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar target/*.jar
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     envVars:
       - key: PORT
         sync: false
@@ -11,7 +10,6 @@ services:
         fromDatabase:
           name: homecredit-db
           property: connectionString
-      # Opcional: Si necesitas las credenciales por separado
       - key: DATABASE_USERNAME
         fromDatabase:
           name: homecredit-db
