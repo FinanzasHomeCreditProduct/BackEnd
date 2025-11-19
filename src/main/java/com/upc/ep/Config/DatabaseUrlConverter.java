@@ -34,22 +34,32 @@ public class DatabaseUrlConverter implements ApplicationListener<ApplicationEnvi
                 // Construir URL JDBC
                 String jdbcUrl = String.format("jdbc:postgresql://%s:%d%s", host, port, path);
                 
-                // Agregar propiedades al entorno (solo si no están ya definidas)
-                if (!environment.containsProperty("spring.datasource.url") || 
-                    environment.getProperty("spring.datasource.url").equals(databaseUrl)) {
-                    Map<String, Object> properties = new HashMap<>();
-                    properties.put("spring.datasource.url", jdbcUrl);
-                    if (!username.isEmpty() && !environment.containsProperty("spring.datasource.username")) {
+                // Agregar propiedades al entorno
+                // Priorizar las variables individuales si están disponibles
+                Map<String, Object> properties = new HashMap<>();
+                properties.put("spring.datasource.url", jdbcUrl);
+                
+                // Solo usar credenciales de la URL si no hay variables individuales
+                String existingUsername = environment.getProperty("DATABASE_USERNAME");
+                String existingPassword = environment.getProperty("DATABASE_PASSWORD");
+                
+                if (existingUsername == null || existingUsername.isEmpty()) {
+                    if (!username.isEmpty()) {
                         properties.put("spring.datasource.username", username);
                     }
-                    if (!password.isEmpty() && !environment.containsProperty("spring.datasource.password")) {
+                }
+                
+                if (existingPassword == null || existingPassword.isEmpty()) {
+                    if (!password.isEmpty()) {
                         properties.put("spring.datasource.password", password);
                     }
-                    
-                    environment.getPropertySources().addFirst(
-                        new MapPropertySource("databaseUrlConverter", properties)
-                    );
                 }
+                
+                environment.getPropertySources().addFirst(
+                    new MapPropertySource("databaseUrlConverter", properties)
+                );
+                
+                System.out.println("Converted DATABASE_URL to JDBC format: " + jdbcUrl);
             } catch (Exception e) {
                 System.err.println("Warning: Could not parse DATABASE_URL: " + e.getMessage());
                 // No lanzar excepción, dejar que Spring Boot use la configuración por defecto
