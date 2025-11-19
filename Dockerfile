@@ -11,9 +11,6 @@ RUN chmod +x ./mvnw
 # Copiar pom.xml primero para cachear dependencias
 COPY pom.xml .
 
-# Descargar dependencias
-RUN ./mvnw dependency:go-offline -B
-
 # Copiar código fuente
 COPY src ./src
 
